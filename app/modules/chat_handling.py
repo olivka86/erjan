@@ -18,7 +18,6 @@ import app.config as config
 
 SEASON = dt.datetime(2022, 7, 7)
 ZHD = dt.datetime(2022, 5, 21)
-START_WORK = dt.datetime.now()  # ержан начал работать
 
 with open(Path(__file__).parent.parent.joinpath('data.json'), encoding='UTF-8') as f:
     data = json.load(f)
@@ -69,13 +68,13 @@ def end_of_days_wrapper(date):
 
 
 @end_of_days_wrapper(SEASON)
-def season_left_days(vk_id, days_left, sentence_end='дней'):
+def season_left_days(vk_id, days_left, sentence_end):
     """отправляет кол-во дней до сезона"""
     send_msg(vk_id, f"До сезона осталось {days_left} {sentence_end}", attachment='photo-202528897_457239196')
 
 
 @end_of_days_wrapper(ZHD)
-def zhd_left_days(vk_id, days_left, sentence_end='дней'):
+def zhd_left_days(vk_id, days_left, sentence_end):
     """отправляет фото ержана с пивом и кол-во дней до зхд"""
 
     # pictures_zhd = ['photo-202528897_457239152', 'photo-202528897_457239154',
@@ -85,18 +84,6 @@ def zhd_left_days(vk_id, days_left, sentence_end='дней'):
     send_msg(vk_id, f"До заходского осталось {days_left} {sentence_end}", attachment='photo-202528897_457239087')
 
 
-@end_of_days_wrapper(START_WORK)
-def how_much_erjan_working(vk_id, sentence_end='дней'):
-    """пишет количество отработанных ержанном часов без перезапуска"""
-    now = dt.datetime.now()
-    time_left = now - START_WORK
-    hour = round(time_left.seconds / 3600)
-    if time_left.days == 0:
-        send_msg(vk_id, f'{hour} часов, начальник')
-    elif hour == 0:
-        send_msg(vk_id, f'{time_left.days} {sentence_end}, начальник')
-    else:
-        send_msg(vk_id, f'{time_left.days} {sentence_end} и {hour} часов, начальник')
 
 
 def send_photo_from_folder(vk_id, path):
@@ -305,12 +292,12 @@ def proceed_from_group_message(message: dict):
 
 
 def proceed_from_user_message(message: dict):
-    pass
+    send_msg(message['peer_id'], message['text'])
 
 
 def proceed_from_chat_message(message: dict):
     number = randrange(1, 1000)
-    chat_id = message['peer_id']
+    chat_id = int(message['peer_id']) - 2_000_000_000
     user_id = message['from_id']
     msg = message['text']
 

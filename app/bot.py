@@ -23,7 +23,7 @@ def bot():
         return config.CONFIRMATION_CODE
 
     elif data['type'] == 'message_new':
-        peer_id = data['object']['peer_id']
+        peer_id = data['object']['message']['peer_id']
 
         print(peer_id)
         if peer_id < 0:
