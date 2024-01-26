@@ -1,3 +1,3 @@
 #!/bin/bash
-source /home/me/erjan/env/bin/activate
-exec gunicorn -c "/home/me/erjan/gunicorn_config.py" wsgi
+source /home/me/bots/erjan/env/bin/activate
+exec gunicorn -c "/home/me/bots/erjan/gunicorn_config.py" wsgi

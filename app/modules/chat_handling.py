@@ -16,8 +16,8 @@ import app.modules.msg_stat as msg_stat
 
 import app.config as config
 
-SEASON = dt.datetime(2022, 7, 7)
-ZHD = dt.datetime(2022, 5, 21)
+SEASON = dt.datetime(2024, 7, 10)
+ZHD = dt.datetime(2024, 5, 17)
 
 with open(Path(__file__).parent.parent.joinpath('data.json'), encoding='UTF-8') as f:
     data = json.load(f)
@@ -70,7 +70,7 @@ def end_of_days_wrapper(date):
 @end_of_days_wrapper(SEASON)
 def season_left_days(vk_id, days_left, sentence_end):
     """отправляет кол-во дней до сезона"""
-    send_msg(vk_id, f"До сезона осталось {days_left} {sentence_end}", attachment='photo-202528897_457239196')
+    send_msg(vk_id, f"До сезона осталось {days_left} {sentence_end}", attachment='photo-202528897_457239248')
 
 
 @end_of_days_wrapper(ZHD)
@@ -82,8 +82,6 @@ def zhd_left_days(vk_id, days_left, sentence_end):
     #             'photo-202528897_457239155', 'photo-202528897_457239156']
 
     send_msg(vk_id, f"До заходского осталось {days_left} {sentence_end}", attachment='photo-202528897_457239087')
-
-
 
 
 def send_photo_from_folder(vk_id, path):
@@ -157,13 +155,14 @@ def send_shakal(vk_id, message):
 
 def send_joke(vk_id):
     month = random.randint(1, 12)
-    year = random.randint(2005, 2021)
-    url = f'https://bash.im/best/{year}/{month}'
+    year = random.randint(2005, 2023)
+    url = f'https://башорг.рф/best/{year}/{month}'
 
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     jokes = soup.findAll('div', class_='quote__body')
     b_joke = repr(jokes[0]).replace('<br/>', '\n')
+    print(b_joke)
     first_line = b_joke.find('\n') + 7
     last_line = b_joke.find('          </div>') - 1
 
@@ -191,12 +190,13 @@ def send_ultrashakal(vk_id, message):
 
 def get_username(user_id):
     user_get = vk.users.get(user_ids=user_id)
+    print(user_id, user_get)
     user_text = user_get[0]
     fullname = user_text['first_name'] + ' ' + user_text['last_name']
     return fullname
 
 
-def registr_msg(message):
+def register_msg(message, chat_id):
     def check_media(event):
         attachments = event['attachments']
         photo, video, audio, doc = 0, 0, 0, 0
@@ -225,11 +225,17 @@ def registr_msg(message):
 
     media = check_media(message)
     user_id = message['from_id']
-    username = get_username(user_id)
+    message_id = message['conversation_message_id']
+    text = message['text']
+    photo_stat = media['photo']
+    audio_stat = media['audio']
+    audio_msg_stat = media['audio_msg']
+    video_stat = media['video']
+    doc_stat = media['doc']
+    sticker_stat = media['sticker']
 
-    msg_stat.insert_msg(chat_id=message['peer_id'], member_id=user_id, member_name=username, photo_stat=media['photo'],
-                        audio_stat=media['audio'], doc_stat=media['doc'], video_stat=media['video'],
-                        audio_msg_stat=media['audio_msg'], sticker_stat=media['sticker'])
+    msg_stat.insert_msg(chat_id, user_id, message_id, photo_stat, audio_stat, text,
+                        audio_msg_stat, video_stat, doc_stat, sticker_stat)
 
 
 # патерны для поиск в сообщение шаблонов
@@ -267,16 +273,16 @@ patterns = {
 }
 
 loyality_cards = {
-    '5': ['photo-202528897_457239175'],
-    'lenta': ['photo-202528897_457239178', 'photo-202528897_457239189', 'photo-202528897_457239190'],
-    'perek': ['photo-202528897_457239181', 'photo-202528897_457239197'],
-    'magnit': ['photo-202528897_457239179'],
-    'okey': ['photo-202528897_457239180', 'photo-202528897_457239188'],
+    '5': ['photo-202528897_457239258'],
+    'lenta': ['photo-202528897_457239249'],
+    'perek': ['photo-202528897_457239254'],
+    'magnit': ['photo-202528897_457239257'],
+    'okey': ['photo-202528897_457239256'],
     'prisma': ['photo-202528897_457239174'],
     'sportmaster': ['photo-202528897_457239176'],
     'trial_sport': ['photo-202528897_457239177'],
     'maksidom': ['photo-202528897_457239194'],
-    'diksi': ['photo-202528897_457239195'],
+    'diksi': ['photo-202528897_457239255'],
     'spar': ['photo-202528897_457239198'],
     'auchan': ['photo-202528897_457239200'],
     'letual': ['photo-202528897_457239201'],
@@ -301,7 +307,9 @@ def proceed_from_chat_message(message: dict):
     user_id = message['from_id']
     msg = message['text']
 
-    registr_msg(message)  # registr message in postgresDB
+    msg_stat.check_chat_exist(chat_id)
+    msg_stat.check_user_exist(user_id)
+    register_msg(message, chat_id)  # registr message in postgresDB
 
     if re.match(patterns['pattern_go'], msg):  # ержана зовут бухать
         if number < 300:
@@ -318,18 +326,18 @@ def proceed_from_chat_message(message: dict):
         send_msg(chat_id, ans)
 
     elif msg == '!статистика':
-        ans = msg_stat.get_chat_statistic(chat_id)
+        ans = msg_stat.get_chat_statistic(chat_id, get_username)
         send_msg(chat_id, ans)
 
     elif msg == '!статистика неделя':
-        ans = msg_stat.get_chat_statistic_week(chat_id)
+        ans = msg_stat.get_chat_statistic_week(chat_id, get_username)
         send_msg(chat_id, ans)
 
     elif (msg == '!погода') or re.match(patterns['pattern_weather'], msg):  # погода
         send_msg(chat_id, current_weather())
 
     # сколько дней до зхд
-    elif (msg == '!зхд') or re.match(patterns['pattern_days_left_to_zhd'], msg):
+    elif (msg == '!зхд') or re.match(patterns['pattern_days_left_to_zhd'], msg) and chat_id != 8:
         zhd_left_days(chat_id)
 
     # ищет вопрос сколько
@@ -350,13 +358,12 @@ def proceed_from_chat_message(message: dict):
         how_much_erjan_working(chat_id)
 
     # поиск запроса на выдачу номера телефона
-    elif re.match(patterns['pattern_phone'], msg).group(3) and \
-            int(re.match(patterns['pattern_phone'], msg).group(3)) in NUMBER_BASE:  # записываем id
-
-        user_id_phone = int(re.match(patterns['pattern_phone'], msg).group(3))
-        send_msg(chat_id,
-                 f"Номер *id{user_id_phone}({NUMBER_BASE[user_id_phone][1]}):"
-                 f" {NUMBER_BASE[user_id_phone][0]}")
+    # elif re.match(patterns['pattern_phone'], msg).group(3):
+    #
+    #     user_id_phone = (re.match(patterns['pattern_phone'], msg).group(3))
+    #     send_msg(chat_id,
+    #              f"Номер *id{user_id_phone}({NUMBER_BASE[user_id_phone][1]}):"
+    #              f" {NUMBER_BASE[user_id_phone][0]}")
 
     elif msg == '!сбер' or re.match(patterns['pattern_sber'], msg):
         ans = f'Да, жду бананы\n\n{config.SBER_CARD_NUMBER}\n{config.SBER_PHONE_NUMBER}'
@@ -430,7 +437,6 @@ def proceed_from_chat_message(message: dict):
                      '!закат\n'
                      '!время – текущее время\n'
                      '!анек – рассказываю худшие анеки рунета\n'
-                     '!зхд – осталось дней до зхд\n'
                      '!сезон – осталось дней до сезона\n'
                      '!работа – прошло времени с последнего запуска ержана на сервере\n\n'
                      'А также:\n'
@@ -532,3 +538,25 @@ def proceed_from_chat_message(message: dict):
 
     elif msg == 'один раз':  # no comments
         send_msg(chat_id, 'не пидорас')
+
+
+if __name__ == '__main__':
+    from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
+    from app.config import GROUPID, TOKEN
+
+    vk_session = vk_api.VkApi(token=TOKEN)  # Передаем токен сообщества
+    vk = vk_session.get_api()
+    def longpoll():
+        _longpoll = VkBotLongPoll(vk_session, GROUPID)
+        try:
+            return _longpoll
+        except vk_api.exceptions.ApiError:
+            pass
+
+
+    for event in longpoll().listen():
+        print('START')
+        if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
+
+            proceed_from_chat_message(event.message)
+            print(event.message['text'])

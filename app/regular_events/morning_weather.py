@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/home/me/bots/erjan")
+
 import vk_api
 
 import app.config as config
@@ -14,7 +17,7 @@ def send_msg(vk_id, text):
 
 
 def send_weather():
-    send_msg(2, for_day_weather())
+    send_msg(7, for_day_weather())
 
 
 if __name__ == "__main__":

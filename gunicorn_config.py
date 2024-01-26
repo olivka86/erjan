@@ -1,5 +1,5 @@
-command = '/home/me/erjan/env/bin/gunicorn'
-pythonpath = '/home/me/erjan'
+command = '/home/me/bots/erjan/env/bin/gunicorn'
+pythonpath = '/home/me/bots/erjan'
 bind = '127.0.0.1:8001'
 workers = 3
 user = 'me'

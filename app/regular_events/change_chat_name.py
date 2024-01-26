@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/home/me/bots/erjan")
+
 import vk_api
 import datetime as dt
 import json
@@ -5,8 +8,8 @@ from pathlib import Path
 
 import app.config as config
 
-DEFAULT_CHAT_NAME = 'Джа’22 🦅'
-CHAT_ID = 2
+DEFAULT_CHAT_NAME = 'Джанго’22 ⛰🍇'
+CHAT_ID = 7
 
 vk_session = vk_api.VkApi(token=config.TOKEN)  # Передаем токен сообщества
 
